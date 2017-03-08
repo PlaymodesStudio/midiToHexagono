@@ -3,7 +3,6 @@
 #include "ofMain.h"
 #include "midiParser.hpp"
 #include "ofxSyphon.h"
-#include "ofxGui.h"
 
 class ofApp : public ofBaseApp{
 
@@ -25,9 +24,7 @@ class ofApp : public ofBaseApp{
 		void gotMessage(ofMessage msg);
     
 private:
-    midiParser*     midi;
-    ofFbo           texture;
-    ofxSyphonServer syphon;
-    
-    ofxPanel        gui;
+    midiParser*         midi;
+    ofFbo               texture;
+    ofxSyphonServer     syphon;
 };

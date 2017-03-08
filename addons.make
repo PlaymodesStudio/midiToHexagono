@@ -1,4 +1,4 @@
-ofxGui
+ofxDatGui_PM
 ofxMidi
 ofxSyphon
 ofxTweenzor

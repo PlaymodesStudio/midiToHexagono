@@ -1,4 +1,5 @@
 #include "ofApp.h"
+#include "parametersControl.h"
 
 //--------------------------------------------------------------
 void ofApp::setup(){
@@ -11,7 +12,8 @@ void ofApp::setup(){
     ofDrawRectangle(0, 0, texture.getWidth(), texture.getHeight());
     texture.end();
     ofSetColor(255);
-    gui.setup(midi->getParameters());
+    
+    parametersControl::getInstance().setup();
     
     syphon.setName("MIDIFICATOR");
 }
@@ -25,7 +27,6 @@ void ofApp::update(){
 //--------------------------------------------------------------
 void ofApp::draw(){
     texture.draw(0,0, ofGetWidth(), ofGetHeight());
-    gui.draw();
 }
 
 //--------------------------------------------------------------

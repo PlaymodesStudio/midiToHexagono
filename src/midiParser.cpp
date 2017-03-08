@@ -7,29 +7,37 @@
 //
 
 #include "midiParser.hpp"
+#include "parametersControl.h"
 
 midiParser::midiParser(){
 
-    ofxMidiIn::listPorts();
-    midiIn.openPort(0);
-    midiIn.addListener(this);
+    
+    
+    mode.addListener(this, &midiParser::modeChange);
+    mode = 1;
     
     parameters.setName("Gui");
-    parameters.add(ringsPerRegister.set("Rings x Register", 12, 0, 64));
+    parameters.add(ringsPerRegister.set("Rings x Register", 12, 1, 64));
     parameters.add(symmetry.set("Symmetry", 1, 1, 64));
-    parameters.add(distance.set("Distance (sym)", 64, 1, 64));
+    parameters.add(distance.set("Sym Distance", 64, 1, 64));
     parameters.add(noteOffEnable.set("noteOff Enable", false));
     parameters.add(noteOffTime.set("noteOff Time", 0.5, 0, 10));
-    parameters.add(mode.set("Mode", 1, 0, 2));
+    parametersControl::addDropdownToParameterGroupFromParameters(parameters, "Mode", {"Ring", "Circular", "Spiral"}, mode);
     parameters.add(dualTree.set("Dual Tree", false));
     parameters.add(reset.set("Reset", false));
     
-    mode.addListener(this, &midiParser::modeChange);
+    parametersControl::getInstance().createGuiFromParams(parameters);
+    
+    
     reset.addListener(this, &midiParser::resetListener);
     symmetry.addListener(this, &midiParser::symmetryChanged);
-    mode = 1;
+    
     
     Tweenzor::init();
+    
+    ofxMidiIn::listPorts();
+    midiIn.openPort(0);
+    midiIn.addListener(this);
 }
 
 void midiParser::fillFbo(ofFbo *fbo){
@@ -37,7 +45,7 @@ void midiParser::fillFbo(ofFbo *fbo){
     if(reset){
         ofSetColor(0);
         ofDrawRectangle(0, 0, fbo->getWidth(), fbo->getHeight());
-        reset = false;
+        parameters.getBool("Reset") = false;
     }
     for(int i = 0 ; i < notes.size() ; i++){
         auto note = notes[i];
@@ -115,17 +123,18 @@ void midiParser::newMidiMessage(ofxMidiMessage &eventArgs){
 }
 
 void midiParser::modeChange(int &m){
-    midiNotesCounter.clear();
-    notes.clear();
     if(mode == HEX_RING || mode == HEX_SPIRAL)
         midiNotesCounter.resize(RINGMODE_STEPS, 0);
     else
         midiNotesCounter.resize(SEQMODE_STEPS, 0);
+    reset = true;
 }
 
 void midiParser::resetListener(bool &b){
-    int i = 2;
-    modeChange(i);
+    if(reset){
+        notes.clear();
+        midiNotesCounter.assign(midiNotesCounter.size(), 0);
+    }
 }
 
 void midiParser::symmetryChanged(int &s){
