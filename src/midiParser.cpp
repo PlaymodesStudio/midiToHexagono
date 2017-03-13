@@ -28,7 +28,7 @@ midiParser::midiParser(){
     
     parametersControl::getInstance().createGuiFromParams(parameters);
     
-    
+    noteOffEnable.addListener(this, &midiParser::resetListener);
     reset.addListener(this, &midiParser::resetListener);
     symmetry.addListener(this, &midiParser::symmetryChanged);
     
@@ -138,7 +138,7 @@ void midiParser::newMidiMessage(ofxMidiMessage &eventArgs){
     }else if(noteOffEnable && (eventArgs.velocity == 0 || eventArgs.status == MIDI_NOTE_OFF)){
         for(auto &note : notes){
             if(note.pitch == mappedPitch && note.midiChannel == eventArgs.channel)
-                note.velocity = 0;
+                Tweenzor::add((float*)&(note.velocity), note.velocity, 0.0f, 0.0f, noteOffTime);
         }
     }
 }
