@@ -26,7 +26,8 @@ typedef struct{
 enum hexModes{
     HEX_RING = 0,
     HEX_CIRCULAR = 1,
-    HEX_SPIRAL = 2
+    HEX_SPIRAL = 2,
+    HEX_SPIRAL_ALL = 3
 };
 
 class midiParser : public ofxMidiListener{

@@ -22,7 +22,7 @@ midiParser::midiParser(){
     parameters.add(distance.set("Sym Distance", 64, 1, 64));
     parameters.add(noteOffEnable.set("noteOff Enable", false));
     parameters.add(noteOffTime.set("noteOff Time", 0.5, 0, 10));
-    parametersControl::addDropdownToParameterGroupFromParameters(parameters, "Mode", {"Ring", "Circular", "Spiral"}, mode);
+    parametersControl::addDropdownToParameterGroupFromParameters(parameters, "Mode", {"Ring", "Circular", "Spiral", "Spirall All"}, mode);
     parameters.add(dualTree.set("Dual Tree", false));
     parameters.add(reset.set("Reset", false));
     
@@ -73,6 +73,27 @@ void midiParser::fillFbo(ofFbo *fbo){
                 }
                 break;
             }
+            case HEX_SPIRAL_ALL:{
+                for(int j = 0; j < symmetry ; j++){
+                    for(int k = 0 ; k < 35 ; k++){
+                        int drawPos;
+                        if(note.midiChannel == 1)
+                            drawPos = (note.pitch+(j*distance)+(int)ceil((float)k/2.0));
+                        else
+                            drawPos = (-note.pitch-(j*distance)-(int)ceil((float)(k+1)/2.0))+64;
+
+                        ofDrawRectangle(drawPos, k, 1, 1);
+                    }
+//                    for(int k = 0 ; k < 35 ; k++){
+//                        int drawPos = -k-(j*distance)-(int)ceil((float)note.pitch/2.0);
+//                        while(drawPos < 0) drawPos += 64;
+//                        ofDrawRectangle(drawPos, note.pitch, 1, 1);
+//                    }
+                }
+                break;
+            }
+            default:
+                break;
         }
         if(note.velocity == 0)
             notes.erase(notes.begin() + i);
@@ -90,7 +111,7 @@ void midiParser::newMidiMessage(ofxMidiMessage &eventArgs){
     if(mode == HEX_RING || mode == HEX_SPIRAL)
         mappedPitch = (eventArgs.pitch-35)%RINGMODE_STEPS;
     else
-        mappedPitch = eventArgs.pitch%SEQMODE_STEPS;
+        mappedPitch = (eventArgs.pitch-35)%SEQMODE_STEPS;
     
     if(eventArgs.velocity != 0 && eventArgs.status == MIDI_NOTE_ON){
         noteInCanvas note;
@@ -101,7 +122,7 @@ void midiParser::newMidiMessage(ofxMidiMessage &eventArgs){
         notes.push_back(note);
         
         if(!noteOffEnable){
-            if(mode == HEX_RING){
+            if(mode == HEX_RING || mode == HEX_SPIRAL_ALL){
                 for(int i = 0; i < notes.size()-1 ;  i++){
                     if(notes[i].pitch == mappedPitch && notes[i].midiChannel == eventArgs.channel)
                         notes.erase(notes.begin() + i);

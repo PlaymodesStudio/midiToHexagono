@@ -1,4 +1,4 @@
-//
+ //
 //  parametersControl.cpp
 //  DGTL_Generator
 //
@@ -427,6 +427,8 @@ void parametersControl::loadPreset(int presetNum, string bank){
     vector<int> tempVec;
     tempVec.push_back(presetNum-1);
     presetMatrix->setSelected(tempVec);
+    
+    parameterGroups[0].getBool("Reset") = 1;
 }
 
 void parametersControl::onGuiButtonEvent(ofxDatGuiButtonEvent e){
@@ -569,7 +571,10 @@ void parametersControl::listenerFunction(ofAbstractParameter& e){
     else if(e.type() == typeid(ofParameter<int>).name()){
         ofParameter<int> castedParam = e.cast<int>();
         normalizedVal = ofMap(castedParam, castedParam.getMin(), castedParam.getMax(), 0, 1);
-
+        
+        if(ofStringTimesInString(castedParam.getName(), "Select") == 1){
+            datGuis[parentIndex]->getDropdown(castedParam.getName())->select(castedParam);
+        }
     }
     else if(e.type() == typeid(ofParameter<bool>).name()){
         ofParameter<bool> castedParam = e.cast<bool>();
