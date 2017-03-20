@@ -42,20 +42,26 @@ midiParser::midiParser(){
 
 void midiParser::fillFbo(ofFbo *fbo){
     processMidiMessages();
-    vector<bool> drawnPitchChecker;
-    drawnPitchChecker.resize(64,0);
+    vector<vector<bool>> drawnPitchChecker;
+    vector<bool> tempAuxVec;
+    tempAuxVec.resize(64,0);
+    drawnPitchChecker.resize(3,tempAuxVec);
+
     fbo->begin();
+    ofDisableBlendMode();
     ofSetColor(0);
     ofDrawRectangle(0, 0, fbo->getWidth(), fbo->getHeight());
-    if(reset){
-        ofSetColor(0);
-        ofDrawRectangle(0, 0, fbo->getWidth(), fbo->getHeight());
-        parameters.getBool("Reset") = false;
-    }
+    ofEnableBlendMode(OF_BLENDMODE_SCREEN);
+//    if(reset){
+//        ofSetColor(0);
+//        ofDrawRectangle(0, 0, fbo->getWidth(), fbo->getHeight());
+//        parameters.getBool("Reset") = false;
+//    }
     for(int i = notes.size()-1 ; i >= 0 ; i--){
         auto note = notes[i];
-        if((mode == HEX_RING || mode == HEX_SPIRAL_ALL) & !drawnPitchChecker[note.pitch]){
-            drawnPitchChecker[note.pitch] = true;
+        if(!drawnPitchChecker[note.midiChannel-1][note.pitch]){
+            if((mode == HEX_RING || mode == HEX_SPIRAL_ALL))
+                drawnPitchChecker[note.midiChannel-1][note.pitch] = true;
         ofSetColor(note.velocity*255);
         switch(mode){
             case HEX_RING:
@@ -116,20 +122,22 @@ void midiParser::draw(){
 }
 
 void midiParser::newMidiMessage(ofxMidiMessage &eventArgs){
-    
+    mutex.lock();
     midiMessages.push_back(eventArgs);
-    
+    mutex.unlock();
 }
 
 void midiParser::processMidiMessages(){
+    mutex.lock();
     vector<ofxMidiMessage> midiMessagesCopy = midiMessages;
     midiMessages.clear();
+    mutex.unlock();
     for(auto eventArgs : midiMessagesCopy){
     int mappedPitch;
     if(mode == HEX_RING || mode == HEX_SPIRAL)
-        mappedPitch = (eventArgs.pitch-35)%RINGMODE_STEPS;
+        mappedPitch = (eventArgs.pitch)%RINGMODE_STEPS;
     else
-        mappedPitch = (eventArgs.pitch-35)%SEQMODE_STEPS;
+        mappedPitch = (eventArgs.pitch)%SEQMODE_STEPS;
     
     if(eventArgs.velocity != 0 && eventArgs.status == MIDI_NOTE_ON){
         
@@ -181,6 +189,7 @@ void midiParser::resetListener(bool &b){
     if(reset){
         notes.clear();
         midiNotesCounter.assign(midiNotesCounter.size(), 0);
+        parameters.getBool("Reset") = false;
     }
 }
 

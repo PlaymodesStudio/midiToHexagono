@@ -49,6 +49,7 @@ public:
 private:
     ofxMidiIn       midiIn;
     vector<ofxMidiMessage>  midiMessages;
+    ofMutex         mutex;
     
     vector<int>     midiNotesCounter;
     deque<noteInCanvas> notes;
