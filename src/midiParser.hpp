@@ -36,8 +36,10 @@ public:
     ~midiParser(){};
     
     void fillFbo(ofFbo* fbo);
+    void draw();
     
     void newMidiMessage(ofxMidiMessage& eventArgs);
+    void processMidiMessages();
     void modeChange(int &m);
     void resetListener(bool &b);
     void symmetryChanged(int &s);
@@ -46,6 +48,7 @@ public:
     
 private:
     ofxMidiIn       midiIn;
+    vector<ofxMidiMessage>  midiMessages;
     
     vector<int>     midiNotesCounter;
     deque<noteInCanvas> notes;

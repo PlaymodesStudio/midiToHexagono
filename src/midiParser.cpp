@@ -41,14 +41,21 @@ midiParser::midiParser(){
 }
 
 void midiParser::fillFbo(ofFbo *fbo){
+    processMidiMessages();
+    vector<bool> drawnPitchChecker;
+    drawnPitchChecker.resize(64,0);
     fbo->begin();
+    ofSetColor(0);
+    ofDrawRectangle(0, 0, fbo->getWidth(), fbo->getHeight());
     if(reset){
         ofSetColor(0);
         ofDrawRectangle(0, 0, fbo->getWidth(), fbo->getHeight());
         parameters.getBool("Reset") = false;
     }
-    for(int i = 0 ; i < notes.size() ; i++){
+    for(int i = notes.size()-1 ; i >= 0 ; i--){
         auto note = notes[i];
+        if((mode == HEX_RING || mode == HEX_SPIRAL_ALL) & !drawnPitchChecker[note.pitch]){
+            drawnPitchChecker[note.pitch] = true;
         ofSetColor(note.velocity*255);
         switch(mode){
             case HEX_RING:
@@ -94,17 +101,30 @@ void midiParser::fillFbo(ofFbo *fbo){
             default:
                 break;
         }
-        if(note.velocity == 0)
+        }
+        if(note.velocity < 0)
             notes.erase(notes.begin() + i);
     }
     fbo->end();
     Tweenzor::update(ofGetElapsedTimeMillis());
 }
 
+void midiParser::draw(){
+    for (int i = 0; i < notes.size() ; i++){
+        ofDrawBitmapString("ID: " + ofToString(i) + "Pitch: " + ofToString(notes[i].pitch), 20, 20+(20*i));
+    }
+}
+
 void midiParser::newMidiMessage(ofxMidiMessage &eventArgs){
     
-//    cout<<eventArgs.toString()<<endl;
+    midiMessages.push_back(eventArgs);
     
+}
+
+void midiParser::processMidiMessages(){
+    vector<ofxMidiMessage> midiMessagesCopy = midiMessages;
+    midiMessages.clear();
+    for(auto eventArgs : midiMessagesCopy){
     int mappedPitch;
     if(mode == HEX_RING || mode == HEX_SPIRAL)
         mappedPitch = (eventArgs.pitch-35)%RINGMODE_STEPS;
@@ -112,16 +132,6 @@ void midiParser::newMidiMessage(ofxMidiMessage &eventArgs){
         mappedPitch = (eventArgs.pitch-35)%SEQMODE_STEPS;
     
     if(eventArgs.velocity != 0 && eventArgs.status == MIDI_NOTE_ON){
-        
-        
-        if(mode == HEX_RING || mode == HEX_SPIRAL_ALL){
-            for(int i = 0; i < notes.size() ;  i--){
-                if(notes[i].pitch == mappedPitch && notes[i].midiChannel == eventArgs.channel){
-                    notes[i].velocity = 0;
-                    break;
-                }
-            }
-        }
         
         noteInCanvas note;
         note.pitch = mappedPitch;
@@ -131,21 +141,31 @@ void midiParser::newMidiMessage(ofxMidiMessage &eventArgs){
         notes.push_back(note);
         
         if(!noteOffEnable){
-            Tweenzor::add((float*)&(notes[notes.size()-1].velocity), notes[notes.size()-1].velocity, 0.0f, 0.0f, noteOffTime);
+            Tweenzor::add((float*)&(notes[notes.size()-1].velocity), notes[notes.size()-1].velocity, -1.0f, 0.0f, noteOffTime*2);
         }
         
+        if(mode == HEX_RING || mode == HEX_SPIRAL_ALL){
+            for(int i = 0; i < notes.size()-1 ;  i++){
+                if(notes[i].pitch == mappedPitch && notes[i].midiChannel == eventArgs.channel){
+                    //notes[i].velocity = 0;
+                    break;
+                }
+            }
+        }
         
         midiNotesCounter[mappedPitch]++;
         midiNotesCounter[mappedPitch] %= ringsPerRegister;
         
     }else if(noteOffEnable && (eventArgs.velocity == 0 || eventArgs.status == MIDI_NOTE_OFF)){
-        for(auto &note : notes){
+        for(int i = notes.size()-1; i >= 0 ;  i--){
+            auto &note = notes[i];
             if(note.pitch == mappedPitch && note.midiChannel == eventArgs.channel){
-                Tweenzor::add((float*)&(note.velocity), note.velocity, 0.0f, 0.0f, noteOffTime);
+                Tweenzor::add((float*)&(note.velocity), note.velocity, -1.0f, 0.0f, noteOffTime*2);
                 cout<<note.pitch<<endl;
                 break;
             }
         }
+    }
     }
 }
 
