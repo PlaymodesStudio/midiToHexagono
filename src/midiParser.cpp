@@ -22,7 +22,9 @@ midiParser::midiParser(){
     parameters.add(distance.set("Sym Distance", 64, 1, 64));
     parameters.add(noteOffEnable.set("noteOff Enable", false));
     parameters.add(noteOffTime.set("noteOff Time", 0.5, 0, 10));
-    parametersControl::addDropdownToParameterGroupFromParameters(parameters, "Mode", {"Ring", "Circular", "Spiral", "Spirall All"}, mode);
+    parametersControl::addDropdownToParameterGroupFromParameters(parameters, "Mode", {"Ring", "Circular", "Spiral", "Spirall All", "Size Mode"}, mode);
+    parameters.add(scaleX.set("Scale X", 1, 1, 20));
+    parameters.add(scaleY.set("Scale Y", 1, 1, 20));
     parameters.add(dualTree.set("Dual Tree", false));
     parameters.add(reset.set("Reset", false));
     
@@ -48,15 +50,13 @@ void midiParser::fillFbo(ofFbo *fbo){
     drawnPitchChecker.resize(3,tempAuxVec);
 
     fbo->begin();
+    ofPushMatrix();
+    if(mode == HEX_CIRCULAR)
+        ofScale(scaleX, scaleY);
     ofDisableBlendMode();
     ofSetColor(0);
     ofDrawRectangle(0, 0, fbo->getWidth(), fbo->getHeight());
     ofEnableBlendMode(OF_BLENDMODE_SCREEN);
-//    if(reset){
-//        ofSetColor(0);
-//        ofDrawRectangle(0, 0, fbo->getWidth(), fbo->getHeight());
-//        parameters.getBool("Reset") = false;
-//    }
     for(int i = notes.size()-1 ; i >= 0 ; i--){
         auto note = notes[i];
         if(!drawnPitchChecker[note.midiChannel-1][note.pitch]){
@@ -69,8 +69,8 @@ void midiParser::fillFbo(ofFbo *fbo){
                 break;
             case HEX_CIRCULAR:{
                 for(int j = 0; j < symmetry ; j++){
-                    int drawPos = (note.pitch+(j*distance))%SEQMODE_STEPS;
-                    ofDrawRectangle(drawPos, note.ringId, 1, 1);
+                    int drawPos = (note.pitch % (64/scaleX)+(j*distance))%SEQMODE_STEPS;
+                    ofDrawRectangle(drawPos, note.ringId % (int)ceil((float)ringsPerRegister/(float)scaleY), 1, 1);
                 }
                 break;
             }
@@ -111,6 +111,7 @@ void midiParser::fillFbo(ofFbo *fbo){
         if(note.velocity < 0)
             notes.erase(notes.begin() + i);
     }
+    ofPopMatrix();
     fbo->end();
     Tweenzor::update(ofGetElapsedTimeMillis());
 }

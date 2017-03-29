@@ -62,6 +62,8 @@ private:
     ofParameter<bool>   noteOffEnable;
     ofParameter<float>  noteOffTime;
     ofParameter<int>    mode;
+    ofParameter<int>    scaleX;
+    ofParameter<int>    scaleY;
     ofParameter<bool>   dualTree;
     ofParameter<bool>   reset;
 };
