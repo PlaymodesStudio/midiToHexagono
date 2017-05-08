@@ -30,6 +30,7 @@ enum hexModes{
     HEX_SPIRAL_ALL = 3
 };
 
+
 class midiParser : public ofxMidiListener{
 public:
     midiParser();
@@ -66,6 +67,7 @@ private:
     ofParameter<int>    scaleY;
     ofParameter<bool>   dualTree;
     ofParameter<bool>   reset;
+    ofParameter<int>    easeFunction;
 };
 
 #endif /* midiParser_hpp */

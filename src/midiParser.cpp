@@ -22,6 +22,42 @@ midiParser::midiParser(){
     parameters.add(distance.set("Sym Distance", 64, 1, 64));
     parameters.add(noteOffEnable.set("noteOff Enable", false));
     parameters.add(noteOffTime.set("noteOff Time", 0.5, 0, 10));
+    parametersControl::addDropdownToParameterGroupFromParameters(parameters, "Ease",
+    {"EASE_LINEAR",
+        "EASE_IN_QUAD",
+        "EASE_OUT_QUAD",
+        "EASE_IN_OUT_QUAD",
+        "EASE_IN_CUBIC",
+        "EASE_OUT_CUBIC",
+        "EASE_IN_OUT_CUBIC",
+        "EASE_IN_QUART",
+        "EASE_OUT_QUART",
+        "EASE_IN_OUT_QUART",
+        "EASE_IN_QUINT",
+        "EASE_OUT_QUINT",
+        "EASE_IN_OUT_QUINT",
+        "EASE_IN_SINE",
+        "EASE_OUT_SINE",
+        "EASE_IN_OUT_SINE",
+        "EASE_IN_EXPO",
+        "EASE_OUT_EXPO",
+        "EASE_IN_OUT_EXPO",
+        "EASE_IN_CIRC",
+        "EASE_OUT_CIRC",
+        "EASE_IN_OUT_CIRC",
+        "EASE_IN_ELASTIC",
+        "EASE_OUT_ELASTIC",
+        "EASE_IN_OUT_ELASTIC",
+        "EASE_OUT_IN_ELASTIC",
+        "EASE_IN_BACK",
+        "EASE_OUT_BACK",
+        "EASE_IN_OUT_BACK",
+        "EASE_OUT_IN_BACK",
+        "EASE_IN_BOUNCE",
+        "EASE_OUT_BOUNCE",
+        "EASE_IN_OUT_BOUNCE",
+        "EASE_OUT_IN_BOUNCE"
+    }, easeFunction);
     parametersControl::addDropdownToParameterGroupFromParameters(parameters, "Mode", {"Ring", "Circular", "Spiral", "Spirall All", "Size Mode"}, mode);
     parameters.add(scaleX.set("Scale X", 1, 1, 20));
     parameters.add(scaleY.set("Scale Y", 1, 1, 20));
@@ -150,7 +186,7 @@ void midiParser::processMidiMessages(){
         notes.push_back(note);
         
         if(!noteOffEnable){
-            Tweenzor::add((float*)&(notes[notes.size()-1].velocity), notes[notes.size()-1].velocity, -1.0f, 0.0f, noteOffTime*2);
+            Tweenzor::add((float*)&(notes[notes.size()-1].velocity), notes[notes.size()-1].velocity, -1.0f, 0.0f, noteOffTime*2, easeFunction);
         }
         
         if(mode == HEX_RING || mode == HEX_SPIRAL_ALL){
@@ -169,7 +205,7 @@ void midiParser::processMidiMessages(){
         for(int i = notes.size()-1; i >= 0 ;  i--){
             auto &note = notes[i];
             if(note.pitch == mappedPitch && note.midiChannel == eventArgs.channel){
-                Tweenzor::add((float*)&(note.velocity), note.velocity, -1.0f, 0.0f, noteOffTime*2);
+                Tweenzor::add((float*)&(note.velocity), note.velocity, -1.0f, 0.0f, noteOffTime*2, easeFunction);
                 cout<<note.pitch<<endl;
                 break;
             }
