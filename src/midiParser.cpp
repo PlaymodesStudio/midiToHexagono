@@ -58,7 +58,7 @@ midiParser::midiParser(){
         "EASE_IN_OUT_BOUNCE",
         "EASE_OUT_IN_BOUNCE"
     }, easeFunction);
-    parametersControl::addDropdownToParameterGroupFromParameters(parameters, "Mode", {"Ring", "Circular", "Spiral", "Spirall All", "Size Mode"}, mode);
+    parametersControl::addDropdownToParameterGroupFromParameters(parameters, "Mode", {"Ring", "Circular", "Spiral", "Spirall All", "Rand"}, mode);
     parameters.add(scaleX.set("Scale X", 1, 1, 20));
     parameters.add(scaleY.set("Scale Y", 1, 1, 20));
     parameters.add(dualTree.set("Dual Tree", false));
@@ -80,6 +80,7 @@ midiParser::midiParser(){
 
 void midiParser::fillFbo(ofFbo *fbo){
     processMidiMessages();
+    Tweenzor::update(ofGetElapsedTimeMillis());
     vector<vector<bool>> drawnPitchChecker;
     vector<bool> tempAuxVec;
     tempAuxVec.resize(64,0);
@@ -103,10 +104,11 @@ void midiParser::fillFbo(ofFbo *fbo){
             case HEX_RING:
                 ofDrawRectangle(21*(note.midiChannel-1), note.pitch, 21, 1);
                 break;
-            case HEX_CIRCULAR:{
+            case HEX_CIRCULAR:
+            case HEX_RANDOM:{
                 for(int j = 0; j < symmetry ; j++){
                     int drawPos = (note.pitch % (64/scaleX)+(j*distance))%SEQMODE_STEPS;
-                    ofDrawRectangle(drawPos, note.ringId % (int)ceil((float)ringsPerRegister/(float)scaleY), 1, 1);
+                    ofDrawRectangle(drawPos, note.ringId , 1, 1);//% (int)ceil((float)ringsPerRegister*3/(float)scaleY), 1, 1);
                 }
                 break;
             }
@@ -149,7 +151,6 @@ void midiParser::fillFbo(ofFbo *fbo){
     }
     ofPopMatrix();
     fbo->end();
-    Tweenzor::update(ofGetElapsedTimeMillis());
 }
 
 void midiParser::draw(){
@@ -173,6 +174,8 @@ void midiParser::processMidiMessages(){
     int mappedPitch;
     if(mode == HEX_RING || mode == HEX_SPIRAL)
         mappedPitch = (eventArgs.pitch)%RINGMODE_STEPS;
+    else if(mode == HEX_RANDOM)
+        mappedPitch = (int)ofRandom(SEQMODE_STEPS);
     else
         mappedPitch = (eventArgs.pitch)%SEQMODE_STEPS;
     
@@ -182,6 +185,9 @@ void midiParser::processMidiMessages(){
         note.pitch = mappedPitch;
         note.velocity = 1.;
         note.ringId = midiNotesCounter[mappedPitch] + ((eventArgs.channel-1) * ringsPerRegister);
+        cout<<note.ringId<<endl;
+        if(mode == HEX_RANDOM)
+            note.ringId = (int)ofRandom(35);
         note.midiChannel = eventArgs.channel;
         notes.push_back(note);
         
@@ -206,7 +212,6 @@ void midiParser::processMidiMessages(){
             auto &note = notes[i];
             if(note.pitch == mappedPitch && note.midiChannel == eventArgs.channel){
                 Tweenzor::add((float*)&(note.velocity), note.velocity, -1.0f, 0.0f, noteOffTime*2, easeFunction);
-                cout<<note.pitch<<endl;
                 break;
             }
         }

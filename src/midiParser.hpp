@@ -27,7 +27,8 @@ enum hexModes{
     HEX_RING = 0,
     HEX_CIRCULAR = 1,
     HEX_SPIRAL = 2,
-    HEX_SPIRAL_ALL = 3
+    HEX_SPIRAL_ALL = 3,
+    HEX_RANDOM = 4
 };
 
 
